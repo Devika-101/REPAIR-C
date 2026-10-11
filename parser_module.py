@@ -179,8 +179,9 @@ def parse_code(source_code):
     return result, syntax_errors.copy()
 
 
+
 if __name__ == "__main__":
-   sample = """
+    sample = """
 int x = 10;
 x = x + 5;
 if (x > 5) {
@@ -188,10 +189,10 @@ if (x > 5) {
 }
 """
 
-tree, errors = parse_code(sample)
+    tree, errors = parse_code(sample)
 
-print("Syntax tree:")
-print(tree)
+    print("Syntax tree:")
+    print(tree)
 
-print("\nSyntax errors:")
-print(errors if errors else "No syntax errors found.")
+    print("\nSyntax errors:")
+    print(errors if errors else "No syntax errors found.")
