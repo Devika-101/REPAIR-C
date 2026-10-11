@@ -65,18 +65,75 @@ def repair_missing_semicolon(source_code):
         "message": "Could not automatically repair this syntax error.",
     }
 
-if __name__ == "__main__":
-    test_cases = [
-        ("Missing semicolon", """int x = 10
-x = x + 5;
-"""),
-        ("Valid code", """int x = 10;
-x = x + 5;
-"""),
-    ]
+def repair_missing_parenthesis(source_code):
+    """
+    Attempts to insert a missing closing parenthesis
+    before an opening curly brace.
+    """
+    syntax_tree, errors = parse_code(source_code)
 
-    for name, code in test_cases:
-        print(f"\n--- {name} ---")
-        result = repair_missing_semicolon(code)
-        print(result["message"])
-        print(result["repaired_code"] or "No repair generated.")
+    if not errors:
+        return {
+            "success": True,
+            "repaired_code": source_code,
+            "message": "No syntax errors found.",
+        }
+
+    lines = source_code.splitlines()
+
+    for line_index, line in enumerate(lines):
+        # Target conditions such as: if (x > 5 {
+        stripped = line.strip()
+
+        if (
+            stripped.startswith(("if (", "while (", "for ("))
+            and "{" in stripped
+            and stripped.count("(") > stripped.count(")")
+        ):
+            candidate_lines = lines.copy()
+            brace_index = candidate_lines[line_index].find("{")
+
+            candidate_lines[line_index] = (
+                candidate_lines[line_index][:brace_index].rstrip()
+                + ") "
+                + candidate_lines[line_index][brace_index:]
+            )
+
+            candidate_code = "\n".join(candidate_lines)
+            candidate_tree, candidate_errors = parse_code(candidate_code)
+
+            if not candidate_errors and candidate_tree is not None:
+                return {
+                    "success": True,
+                    "repaired_code": candidate_code,
+                    "message": (
+                        f"Inserted a missing closing parenthesis "
+                        f"on line {line_index + 1}."
+                    ),
+                }
+
+    return {
+        "success": False,
+        "repaired_code": None,
+        "message": "Could not repair a missing closing parenthesis.",
+    }
+
+
+if __name__ == "__main__":
+    broken_code = """int x = 10;
+if (x > 5 {
+    return x;
+}
+"""
+
+    result = repair_missing_parenthesis(broken_code)
+
+    print("Original code:")
+    print(broken_code)
+
+    print("\nRepair result:")
+    print(result["message"])
+
+    if result["success"]:
+        print("\nRepaired code:")
+        print(result["repaired_code"])
